@@ -1,0 +1,53 @@
+{
+  "format": 1,
+  "restore": {
+    "/home/blame/coding/puck_mods/CompetitivePuckTweaks/CompetitivePuckTweaks.csproj": {}
+  },
+  "projects": {
+    "/home/blame/coding/puck_mods/CompetitivePuckTweaks/CompetitivePuckTweaks.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "/home/blame/coding/puck_mods/CompetitivePuckTweaks/CompetitivePuckTweaks.csproj",
+        "projectName": "CompetitivePuckTweaks",
+        "projectPath": "/home/blame/coding/puck_mods/CompetitivePuckTweaks/CompetitivePuckTweaks.csproj",
+        "packagesPath": "/home/blame/.nuget/packages/",
+        "outputPath": "/home/blame/coding/puck_mods/CompetitivePuckTweaks/obj/",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "/home/blame/.nuget/NuGet/NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net4.8"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net48": {
+            "targetAlias": "net4.8",
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        }
+      },
+      "frameworks": {
+        "net48": {
+          "targetAlias": "net4.8",
+          "dependencies": {
+            "Microsoft.NETFramework.ReferenceAssemblies": {
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[1.0.3, )",
+              "autoReferenced": true
+            }
+          },
+          "runtimeIdentifierGraphPath": "/var/snap/dotnet/common/dotnet/sdk/8.0.118/RuntimeIdentifierGraph.json"
+        }
+      }
+    }
+  }
+}

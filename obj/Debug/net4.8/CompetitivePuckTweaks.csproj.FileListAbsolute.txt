@@ -1,0 +1,9 @@
+/home/blame/coding/puck_mods/CompetitivePuckTweaks/bin/Debug/net4.8/CompetitivePuckTweaks.dll
+/home/blame/coding/puck_mods/CompetitivePuckTweaks/bin/Debug/net4.8/CompetitivePuckTweaks.pdb
+/home/blame/coding/puck_mods/CompetitivePuckTweaks/obj/Debug/net4.8/CompetitivePuckTweaks.csproj.AssemblyReference.cache
+/home/blame/coding/puck_mods/CompetitivePuckTweaks/obj/Debug/net4.8/CompetitivePuckTweaks.GeneratedMSBuildEditorConfig.editorconfig
+/home/blame/coding/puck_mods/CompetitivePuckTweaks/obj/Debug/net4.8/CompetitivePuckTweaks.AssemblyInfoInputs.cache
+/home/blame/coding/puck_mods/CompetitivePuckTweaks/obj/Debug/net4.8/CompetitivePuckTweaks.AssemblyInfo.cs
+/home/blame/coding/puck_mods/CompetitivePuckTweaks/obj/Debug/net4.8/CompetitivePuckTweaks.csproj.CoreCompileInputs.cache
+/home/blame/coding/puck_mods/CompetitivePuckTweaks/obj/Debug/net4.8/CompetitivePuckTweaks.dll
+/home/blame/coding/puck_mods/CompetitivePuckTweaks/obj/Debug/net4.8/CompetitivePuckTweaks.pdb

@@ -1,0 +1,46 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net4.8</TargetFramework>
+    <BuildCounterFile>$(MSBuildProjectDirectory)/buildcounter.txt</BuildCounterFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Libs Include="lib/*.dll" />
+
+    <Reference Include="@(Libs)">
+      <HintPath>%(Libs.FullPath)</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+  <Target Name="GenerateVersionInfo" BeforeTargets="CoreCompile">
+
+    <ReadLinesFromFile File="$(BuildCounterFile)" Condition="Exists('$(BuildCounterFile)')">
+      <Output TaskParameter="Lines" ItemName="BuildCounterLines" />
+    </ReadLinesFromFile>
+
+    <PropertyGroup>
+      <BaseVersion>0.5g</BaseVersion>
+      <CurrentBuildNumber Condition="'@(BuildCounterLines)' == ''">0</CurrentBuildNumber>
+      <CurrentBuildNumber Condition="'@(BuildCounterLines)' != ''">@(BuildCounterLines)</CurrentBuildNumber>
+      <NewBuildNumber>$([MSBuild]::Add($(CurrentBuildNumber), 1))</NewBuildNumber>
+    </PropertyGroup>
+
+    <WriteLinesToFile File="$(BuildCounterFile)" Lines="$(NewBuildNumber)" Overwrite="true" />
+
+    <ItemGroup>
+      <VersionContent Include="namespace CompetitivePuckTweaks {" />
+      <VersionContent Include="%09public static partial class Constants" />
+      <VersionContent Include="%09{" />
+      <VersionContent Include="%09%09public const string MOD_NAME = &quot;CompetitivePuckTweaks&quot;%3B" />
+      <VersionContent Include="%09%09public const string MOD_VERSION = &quot;$(BaseVersion)-b$(NewBuildNumber)&quot;%3B" />
+      <VersionContent Include="%09}" />
+      <VersionContent Include="}" />
+    </ItemGroup>
+
+    <WriteLinesToFile File="src/Constants.cs" Lines="@(VersionContent)" Overwrite="true" />
+
+  </Target>
+
+</Project>
