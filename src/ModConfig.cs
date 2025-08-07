@@ -8,7 +8,6 @@ namespace CompetitivePuckTweaks.src
 {
     public class ModConfig
     {
-
         // fields for movement configuration
 
         public float TurnAccelerationBase { get; set; } = 1.825f;
@@ -62,6 +61,7 @@ namespace CompetitivePuckTweaks.src
 
         public bool EnableMidStickCollider { get; set; } = true;
         public float StickMass { get; set; } = 1.1f;
+        public float ShaftHandleProportionalGain { get; set; } = 500f;
 
         // fields for stick positioner configuration
         public float SoftCollisionForce { get; set; } = 20f;
@@ -110,11 +110,12 @@ namespace CompetitivePuckTweaks.src
             }
         }
 
-        public void SaveToFile(string filePath)
+        public void SaveToFile(string filePath, bool newfile = false)
         {
             try
             {
                 string json = JsonSerializer.Serialize(this, new JsonSerializerOptions { WriteIndented = true });
+                if (!File.Exists(filePath) && newfile) File.Create(filePath);
                 File.WriteAllText(filePath, json);
             }
             catch (Exception ex)

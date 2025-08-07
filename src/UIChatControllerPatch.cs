@@ -30,7 +30,7 @@ namespace CompetitivePuckTweaks.src
                 }
                 catch (Exception e)
                 {
-                    UIChat.Instance.Server_SendSystemChatMessage($"Failed to get config value: {e.Message}");
+                    UIChat.Instance.Server_SendSystemChatMessage($"Failed to get config value: {e.Message}", clientId);
                 }
                 return;
             }
@@ -70,7 +70,7 @@ namespace CompetitivePuckTweaks.src
                         string path;
                         if (args.Length > 0) path = args[0];
                         else path = Path.Combine(".", "config", "CompetitivePuckTweaks.json");
-                        PluginCore.config.SaveToFile(path);
+                        PluginCore.config.SaveToFile(path, true);
                         UIChat.Instance.Server_SendSystemChatMessage($"Config saved to <i>{args[0]}</i>", clientId);
                     }
                     catch (Exception e)

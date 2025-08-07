@@ -7,3 +7,4 @@
 /home/blame/coding/puck_mods/CompetitivePuckTweaks/obj/Debug/net4.8/CompetitivePuckTweaks.csproj.CoreCompileInputs.cache
 /home/blame/coding/puck_mods/CompetitivePuckTweaks/obj/Debug/net4.8/CompetitivePuckTweaks.dll
 /home/blame/coding/puck_mods/CompetitivePuckTweaks/obj/Debug/net4.8/CompetitivePuckTweaks.pdb
+/home/blame/coding/puck_mods/CompetitivePuckTweaks/obj/Debug/net4.8/CompetitivePuckTweaks.sourcelink.json

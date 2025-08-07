@@ -14,6 +14,8 @@ namespace CompetitivePuckTweaks.src
         [HarmonyPostfix]
         public static void Postfix(Stick __instance, ref GameObject ___shaftHandle, ref float ___shaftHandleProportionalGain)
         {
+            ___shaftHandleProportionalGain = PluginCore.config.ShaftHandleProportionalGain;
+
             BoxCollider boxCollider = null;
 
             StickMesh newStickMesh = __instance.gameObject.GetComponentInChildren<StickMesh>();
