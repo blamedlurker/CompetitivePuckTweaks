@@ -8,11 +8,6 @@ namespace CompetitivePuckTweaks.src
 {
     public class UtilObj
     {
-        public UtilObj()
-        {
-            PluginCore.Log("Testing UtilObj loading...");
-            this.ModificationEvent(new UnityEngine.PhysicsScene(), new NativeArray<ModifiableContactPair>());
-        }
 
         public void LoadListeners()
         {
@@ -35,7 +30,7 @@ namespace CompetitivePuckTweaks.src
                 if (PluginCore.StickMeshes.Keys.Contains(pair.colliderInstanceID) && PluginCore.StickMeshes.Keys.Contains(pair.otherColliderInstanceID)) for (int i = 0; i < pair.contactCount; i++)
                     {
                         float maxImpulse = pair.GetMaxImpulse(i);
-                        pair.SetMaxImpulse(i, (Mathf.Abs(PluginCore.StickMeshes[pair.colliderInstanceID].localToWorldMatrix.MultiplyVector(pair.GetNormal(i)).y) > 0.5f ? maxImpulse : 0f));
+                        pair.SetMaxImpulse(i, (Mathf.Abs(PluginCore.StickMeshes[pair.colliderInstanceID].localToWorldMatrix.MultiplyVector(pair.GetNormal(i)).y) > PluginCore.config.StickConstraintThreshold ? maxImpulse : 0f));
                     }
             }
         }

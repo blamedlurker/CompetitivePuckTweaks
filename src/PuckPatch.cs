@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using UnityEngine;
 using HarmonyLib;
+using UnityEngine.InputSystem.Controls;
 
 namespace CompetitivePuckTweaks.src
 {
@@ -32,16 +33,26 @@ namespace CompetitivePuckTweaks.src
         }
     }
 
-    // [HarmonyPatch(typeof(Puck), "FixedUpdate")]
-    // public class HeightDragTweak
+    // [HarmonyPatch(typeof(Puck), "OnCollisionExit")]
+    // public class PuckColliderSkip
     // {
     //     [HarmonyPrefix]
-    //     public static void Prefix(Puck __instance)
+    //     public static bool Prefix()
     //     {
-    //         Rigidbody puckRB = __instance.Rigidbody;
-    //         if (puckRB.position.y > 4f) puckRB.linearDamping = 0.43f;
-    //         else puckRB.linearDamping = 0.29f;
-    //         puckRB.AddForce(new Vector3(0, -10.6f, 0), ForceMode.Acceleration);
+    //         return false;
     //     }
     // }
+
+    [HarmonyPatch(typeof(Puck), "FixedUpdate")]
+    public class HeightDragTweak
+    {
+        [HarmonyPostfix]
+        public static void Postfix(Puck __instance)
+        {
+            if (!PluginCore.config.PuckDragSpeedDependence) return;
+            float delta = __instance.Rigidbody.linearVelocity.magnitude - PluginCore.config.PuckNominalSpeed;
+            float newDrag = PluginCore.config.PuckDrag * (1 + PluginCore.config.PuckDragFactor * delta * delta * delta);
+            __instance.Rigidbody.linearDamping = Mathf.Max(PluginCore.config.PuckDrag, newDrag);
+        }
+    }
 }

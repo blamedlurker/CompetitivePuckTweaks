@@ -36,8 +36,14 @@ namespace CompetitivePuckTweaks.src
             }
             else if (command == "/gf" || command == "/getfields" || command == "/girlfriend")
             {
-                UIChat.Instance.Server_SendSystemChatMessage("<b>Modifiable Fields</b>", clientId);
-                foreach (PropertyInfo girlfriend in typeof(ModConfig).GetProperties()) UIChat.Instance.Server_SendSystemChatMessage($"{girlfriend}", clientId);
+                int i = 1;
+                if (args.Length > 0) int.TryParse(args[0], out i);
+                UIChat.Instance.Server_SendSystemChatMessage($"<b>Modifiable Fields</b> <i>Page {i}</i>", clientId);
+                PropertyInfo[] properties = typeof(ModConfig).GetProperties();
+                for (int j = 20 * (i - 1); j < properties.Length && j < 20 * i; j++)
+                {
+                    UIChat.Instance.Server_SendSystemChatMessage($"{properties[j]} = {properties[j].GetValue(PluginCore.config)}", clientId);
+                }
             }
 
             if (!PluginCore.config.OpenConfigChanges && !ServerManager.Instance.AdminSteamIds.Contains(PlayerManager.Instance.GetPlayerByClientId(clientId).SteamId.Value.ToString())) return;
@@ -65,13 +71,14 @@ namespace CompetitivePuckTweaks.src
                     }
                     break;
                 case "/saveconfig":
+                case "/save":
                     try
                     {
                         string path;
                         if (args.Length > 0) path = args[0];
                         else path = Path.Combine(".", "config", "CompetitivePuckTweaks.json");
                         PluginCore.config.SaveToFile(path, true);
-                        UIChat.Instance.Server_SendSystemChatMessage($"Config saved to <i>{args[0]}</i>", clientId);
+                        UIChat.Instance.Server_SendSystemChatMessage($"Config saved to <i>{path}</i>", clientId);
                     }
                     catch (Exception e)
                     {
@@ -79,6 +86,7 @@ namespace CompetitivePuckTweaks.src
                     }
                     break;
                 case "/loadconfig":
+                case "/load":
                     try
                     {
                         string path;

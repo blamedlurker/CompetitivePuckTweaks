@@ -22,8 +22,12 @@ namespace CompetitivePuckTweaks.src
         public float AngularForceMultiplier { get; set; } = 5.22f;
         public float ForwardsAccelerationBase { get; set; } = 2f;
         public float ForwardsSprintAccelerationBase { get; set; } = 4.75f;
+        public float ForwardsAccelerationMin { get; set; } = 2f;
+        public float ForwardsSprintAccelerationMin { get; set; } = 4f;
         public float BackwardsAccelerationBase { get; set; } = 1.8f;
+        public float BackwardsAccelerationMin { get; set; } = 1.8f;
         public float BackwardsSprintAccelerationBase { get; set; } = 2f;
+        public float BackwardsSprintAccelerationMin { get; set; } = 2f;
         public float ForwardsAccelerationScaling { get; set; } = 0;
         public float ForwardsSprintAccelerationScaling { get; set; } = 0;
         public float BackwardsAccelerationScaling { get; set; } = 0;
@@ -42,6 +46,8 @@ namespace CompetitivePuckTweaks.src
         public float PlayerColliderRadius { get; set; } = 0.225f;
         public float PlayerColliderHeight { get; set; } = 1.5f;
         public float PlayerColliderBounciness { get; set; } = 0.05f;
+        public float SlideDrag { get; set; } = 0.2f;
+        public float CenterSpawnOffset { get; set; } = 0f;
 
         // fields for puck configuration
         public float PuckMaxSpeed { get; set; } = 30f;
@@ -53,15 +59,22 @@ namespace CompetitivePuckTweaks.src
         public float PuckMass { get; set; } = 0.375f;
         public bool RandomPuckDrop { get; set; } = true;
         public bool EnablePuckThroughBodies { get; set; } = false;
-        public bool EnablePuckThroughGroin { get; set; } = false;
+        public bool EnablePuckThroughGroin { get; set; } = true;
+        public bool PuckDragSpeedDependence { get; set; } = false;
+        public float PuckNominalSpeed { get; set; } = 30f;
+        public float PuckDragFactor { get; set; } = 0.0025f;
 
         // fields for stick configuration
         public bool DisableStickCollision { get; set; } = false;
-        public bool DisableShaftCollision { get; set; } = true;
+        public bool DisableShaftCollision { get; set; } = false;
 
-        public bool EnableMidStickCollider { get; set; } = true;
+        public bool EnableMidStickCollider { get; set; } = false;
+        public int MidStickColliderSize { get; set; } = 0;
         public float StickMass { get; set; } = 1.1f;
+        public bool AlterStickPositionerOutput { get; set; } = false;
         public float ShaftHandleProportionalGain { get; set; } = 500f;
+        public float StickPositionerOutputMax { get; set; } = 750f;
+        public float StickConstraintThreshold { get; set; } = 0.5f;
 
         // fields for stick positioner configuration
         public float SoftCollisionForce { get; set; } = 20f;
@@ -76,15 +89,13 @@ namespace CompetitivePuckTweaks.src
         // fields for physics configuration
         public float FixedDeltaTime { get; set; } = 0.01f;
         public int SolverIterations { get; set; } = 6;
-        public bool ConstrainStickOnStick { get; set; } = false;
+        public bool ConstrainStickOnStick { get; set; } = true;
 
         // fields for mod configuration
         public bool OpenConfigChanges { get; set; } = false;
 
         // jokes
         public bool BananaMode { get; set; } = false;
-
-
 
         public ModConfig()
         {

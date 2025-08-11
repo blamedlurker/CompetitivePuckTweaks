@@ -105,13 +105,15 @@ namespace CompetitivePuckTweaks.src
         [HarmonyPrefix]
         public static bool Prefix(Stick __instance)
         {
+            BoxCollider thisBoxCol;
             if (PluginCore.config.BananaMode) return false;
             if (!PluginCore.config.ConstrainStickOnStick) return true;
             StickMesh thisStickMesh = __instance.gameObject.GetComponentInChildren<StickMesh>();
-            BoxCollider thisBoxCol = __instance.GetComponent<BoxCollider>();
+            if (PluginCore.config.EnableMidStickCollider) { thisBoxCol = __instance.GetComponent<BoxCollider>(); }
+            else { thisBoxCol = null; }
 
             MeshCollider[] colliders = thisStickMesh.GetComponentsInChildren<MeshCollider>();
-            if (PluginCore.StickMeshes.ContainsKey(thisBoxCol.GetInstanceID())) PluginCore.StickMeshes.Remove(thisBoxCol.GetInstanceID());
+            if (PluginCore.config.EnableMidStickCollider && PluginCore.StickMeshes.ContainsKey(thisBoxCol.GetInstanceID())) PluginCore.StickMeshes.Remove(thisBoxCol.GetInstanceID());
             foreach (MeshCollider col in colliders) if (PluginCore.StickMeshes.ContainsKey(col.GetInstanceID())) PluginCore.StickMeshes.Remove(col.GetInstanceID());
             return true;
         }

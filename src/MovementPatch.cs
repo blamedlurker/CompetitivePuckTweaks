@@ -36,10 +36,14 @@ namespace CompetitivePuckTweaks.src
             ___turnAcceleration = PluginCore.config.TurnAccelerationBase - speed * PluginCore.config.TurnAccelerationScaling;
             ___turnBrakeAcceleration = PluginCore.config.TurnBrakeAccelerationBase - speed * PluginCore.config.TurnBrakeAccelerationScaling;
             ___turnMaxSpeed = PluginCore.config.TurnMaxSpeedBase - speed * PluginCore.config.TurnMaxSpeedScaling;
-            ___forwardsAcceleration = PluginCore.config.ForwardsAccelerationBase - speed * PluginCore.config.ForwardsAccelerationScaling;
-            ___forwardsSprintAcceleration = PluginCore.config.ForwardsSprintAccelerationBase - speed * PluginCore.config.ForwardsSprintAccelerationScaling;
-            ___backwardsAcceleration = PluginCore.config.BackwardsAccelerationBase - speed * PluginCore.config.BackwardsAccelerationScaling;
-            ___backwardsSprintAcceleration = PluginCore.config.BackwardsSprintAccelerationBase - speed * PluginCore.config.BackwardsSprintAccelerationScaling;
+            ___forwardsAcceleration = Mathf.Max(PluginCore.config.ForwardsAccelerationBase -
+                    speed * PluginCore.config.ForwardsAccelerationScaling, PluginCore.config.ForwardsAccelerationMin);
+            ___forwardsSprintAcceleration = Mathf.Max(PluginCore.config.ForwardsSprintAccelerationBase -
+                    speed * PluginCore.config.ForwardsSprintAccelerationScaling, PluginCore.config.ForwardsSprintAccelerationMin);
+            ___backwardsAcceleration = Mathf.Max(PluginCore.config.BackwardsAccelerationBase -
+                    speed * PluginCore.config.BackwardsAccelerationScaling);
+            ___backwardsSprintAcceleration = Mathf.Max(PluginCore.config.BackwardsSprintAccelerationBase -
+                    speed * PluginCore.config.BackwardsSprintAccelerationScaling, PluginCore.config.BackwardsSprintAccelerationMin);
 
         }
     }

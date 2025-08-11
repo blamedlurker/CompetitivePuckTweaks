@@ -1,7 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using UnityEngine;
 using HarmonyLib;
 
@@ -38,11 +35,15 @@ namespace CompetitivePuckTweaks.src
     public class StickPositionerAwakePatch
     {
         [HarmonyPostfix]
-        public static void Postfix(StickPositioner __instance, ref float ___softCollisionForce, ref Vector3 ___bladeTargetFocusPointInitialLocalPosition)
+        public static void Postfix(StickPositioner __instance, ref float ___softCollisionForce, ref Vector3 ___bladeTargetFocusPointInitialLocalPosition, ref float ___outputMin, ref float ___outputMax)
         {
             ___softCollisionForce = PluginCore.config.SoftCollisionForce;
             ___bladeTargetFocusPointInitialLocalPosition += new Vector3(0, PluginCore.config.BladeTargetFocusPointOffsetY, 0);
+            if (PluginCore.config.AlterStickPositionerOutput)
+            {
+                ___outputMin = -PluginCore.config.StickPositionerOutputMax;
+                ___outputMax = PluginCore.config.StickPositionerOutputMax;
+            }
         }
-            
     }
 }

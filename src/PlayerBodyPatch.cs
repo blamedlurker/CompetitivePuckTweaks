@@ -9,17 +9,28 @@ namespace CompetitivePuckTweaks.src
     {
         [HarmonyPostfix]
         public static void Postfix(PlayerBodyV2 __instance, ref float ___slideTurnMultiplier,
-         ref float ___stopDrag, ref float ___balanceRecoveryTime, ref PlayerMesh ___playerMesh)
+         ref float ___stopDrag, ref float ___balanceRecoveryTime, ref PlayerMesh ___playerMesh, ref float ___slideDrag)
         {
+            if (GameManager.Instance.Phase == GamePhase.FaceOff && PluginCore.config.RandomPuckDrop)
+            {
+                if (__instance.Player.PlayerPosition.Name == "C")
+                {
+                    if (__instance.Player.Team.Value == PlayerTeam.Blue) __instance.transform.position += new UnityEngine.Vector3(0, 0, PluginCore.config.CenterSpawnOffset);
+                    else __instance.transform.position -= new UnityEngine.Vector3(0, 0, PluginCore.config.CenterSpawnOffset);
+                }
+            }
+
             ___slideTurnMultiplier = PluginCore.config.SlideTurnMultiplier;
             ___stopDrag = PluginCore.config.StopDrag;
             ___balanceRecoveryTime = PluginCore.config.BalanceRecoveryTime;
             __instance.GetComponent<CapsuleCollider>().radius = PluginCore.config.PlayerColliderRadius;
             __instance.GetComponent<CapsuleCollider>().height = PluginCore.config.PlayerColliderHeight;
 
+            bool isGoalie = (__instance.name.Contains("Goalie"));
+
             if (PluginCore.config.EnableSmallerModels)
             {
-                if (__instance.name.Contains("Goalie"))
+                if (isGoalie)
                 {
                     ___playerMesh.PlayerGroin.transform.localPosition += new Vector3(0, 0.1f, 0);
                 }
@@ -36,17 +47,19 @@ namespace CompetitivePuckTweaks.src
                 }
             }
 
-            if (PluginCore.config.EnablePuckThroughBodies && !__instance.name.Contains("Goalie") && !__instance.Player.IsReplay.Value)
+            if (PluginCore.config.EnablePuckThroughBodies && !isGoalie && !__instance.Player.IsReplay.Value)
             {
                 ___playerMesh.PlayerGroin.GetComponentInChildren<MeshCollider>().excludeLayers |= (1 << LayerMask.NameToLayer("Puck"));
                 ___playerMesh.PlayerTorso.GetComponentInChildren<MeshCollider>().excludeLayers |= (1 << LayerMask.NameToLayer("Puck"));
                 ___playerMesh.PlayerHead.GetComponentInChildren<SphereCollider>().excludeLayers |= (1 << LayerMask.NameToLayer("Puck"));
             }
 
-            if (PluginCore.config.EnablePuckThroughGroin && !__instance.name.Contains("Goalie") && !__instance.Player.IsReplay.Value)
+            if (PluginCore.config.EnablePuckThroughGroin && !isGoalie && !__instance.Player.IsReplay.Value)
             {
                 ___playerMesh.PlayerGroin.GetComponentInChildren<MeshCollider>().excludeLayers |= (1 << LayerMask.NameToLayer("Puck"));
             }
+
+            if (!isGoalie) ___slideDrag = PluginCore.config.SlideDrag;
 
             ___playerMesh.PlayerTorso.GetComponentInChildren<MeshCollider>().material.bounciness = PluginCore.config.PlayerColliderBounciness;
             ___playerMesh.PlayerGroin.GetComponentInChildren<MeshCollider>().material.bounciness = PluginCore.config.PlayerColliderBounciness;
