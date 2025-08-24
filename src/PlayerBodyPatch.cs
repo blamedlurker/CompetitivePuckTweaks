@@ -23,8 +23,16 @@ namespace CompetitivePuckTweaks.src
             ___slideTurnMultiplier = PluginCore.config.SlideTurnMultiplier;
             ___stopDrag = PluginCore.config.StopDrag;
             ___balanceRecoveryTime = PluginCore.config.BalanceRecoveryTime;
-            __instance.GetComponent<CapsuleCollider>().radius = PluginCore.config.PlayerColliderRadius;
-            __instance.GetComponent<CapsuleCollider>().height = PluginCore.config.PlayerColliderHeight;
+            __instance.GetComponent<CapsuleCollider>().radius *= PluginCore.config.TorsoColliderRadiusFactor;
+            // cc.enabled = false;
+            // BoxCollider newTorso = __instance.gameObject.AddComponent<BoxCollider>();
+            __instance.GetComponent<SphereCollider>().radius *= PluginCore.config.HeadColliderRadiusFactor;
+            // newTorso.center = new Vector3(0, 1.55f, 0);
+            // newTorso.size = new Vector3(0.5f, 0.75f, 0.1f);
+            // newTorso.excludeLayers = cc.excludeLayers;
+            // newTorso.includeLayers = cc.includeLayers;
+            // newTorso.material = cc.material;
+            // newTorso.transform.forward = __instance.transform.forward;
 
             bool isGoalie = (__instance.name.Contains("Goalie"));
 

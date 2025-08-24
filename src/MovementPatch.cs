@@ -41,7 +41,7 @@ namespace CompetitivePuckTweaks.src
             ___forwardsSprintAcceleration = Mathf.Max(PluginCore.config.ForwardsSprintAccelerationBase -
                     speed * PluginCore.config.ForwardsSprintAccelerationScaling, PluginCore.config.ForwardsSprintAccelerationMin);
             ___backwardsAcceleration = Mathf.Max(PluginCore.config.BackwardsAccelerationBase -
-                    speed * PluginCore.config.BackwardsAccelerationScaling);
+                    speed * PluginCore.config.BackwardsAccelerationScaling, PluginCore.config.BackwardsAccelerationMin);
             ___backwardsSprintAcceleration = Mathf.Max(PluginCore.config.BackwardsSprintAccelerationBase -
                     speed * PluginCore.config.BackwardsSprintAccelerationScaling, PluginCore.config.BackwardsSprintAccelerationMin);
 

@@ -24,12 +24,13 @@ namespace CompetitivePuckTweaks.src
 
             if (__instance == null) { Debug.LogError($"[{Constants.MOD_NAME}] Stick null on network post spawn"); return; }
 
-            MeshCollider[] newMeshColliders = newStickMesh.gameObject.GetComponentsInChildren<MeshCollider>();
+            // find meshcolliders
+            MeshCollider[] newMeshColliders = newStickMesh.transform.GetComponentsInChildren<MeshCollider>();
 
             foreach (MeshCollider mC in newMeshColliders)
             {
                 mC.hasModifiableContacts = true;
-                PluginCore.StickMeshes.Add(mC.GetInstanceID(), __instance.transform);
+                PluginCore.StickMeshes.Add(mC.GetInstanceID(), __instance);
             }
 
             __instance.Rigidbody.mass = PluginCore.config.StickMass;
@@ -43,7 +44,7 @@ namespace CompetitivePuckTweaks.src
                 boxCollider.size = new UnityEngine.Vector3(0.029f, 0.14f, 1.21f);
                 boxCollider.center += new UnityEngine.Vector3(0, 0, 0.145f);
                 boxCollider.hasModifiableContacts = true;
-                PluginCore.StickMeshes.Add(boxCollider.GetInstanceID(), __instance.transform);
+                PluginCore.StickMeshes.Add(boxCollider.GetInstanceID(), __instance);
 
                 foreach (Puck puck in UnityEngine.Object.FindObjectsByType<Puck>(FindObjectsSortMode.None))
                 {

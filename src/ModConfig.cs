@@ -43,7 +43,8 @@ namespace CompetitivePuckTweaks.src
         public bool EnableGoalieMicrodash { get; set; } = false;
         public float MicrodashStamCostFraction { get; set; } = 0.75f;
         public bool EnableSmallerModels { get; set; } = false;
-        public float PlayerColliderRadius { get; set; } = 0.225f;
+        public float TorsoColliderRadiusFactor { get; set; } = 1f;
+        public float HeadColliderRadiusFactor { get; set; } = 1f;
         public float PlayerColliderHeight { get; set; } = 1.5f;
         public float PlayerColliderBounciness { get; set; } = 0.05f;
         public float SlideDrag { get; set; } = 0.2f;
@@ -67,14 +68,13 @@ namespace CompetitivePuckTweaks.src
         // fields for stick configuration
         public bool DisableStickCollision { get; set; } = false;
         public bool DisableShaftCollision { get; set; } = false;
-
         public bool EnableMidStickCollider { get; set; } = false;
         public int MidStickColliderSize { get; set; } = 0;
         public float StickMass { get; set; } = 1.1f;
         public bool AlterStickPositionerOutput { get; set; } = false;
         public float ShaftHandleProportionalGain { get; set; } = 500f;
         public float StickPositionerOutputMax { get; set; } = 750f;
-        public float StickConstraintThreshold { get; set; } = 0.5f;
+        public float StickConstraintThreshold { get; set; } = 0.3f;
 
         // fields for stick positioner configuration
         public float SoftCollisionForce { get; set; } = 20f;

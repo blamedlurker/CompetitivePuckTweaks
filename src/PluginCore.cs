@@ -17,7 +17,7 @@ namespace CompetitivePuckTweaks.src
         public static Mesh torsoMesh;
         public static Mesh groinMesh;
         public static ModConfig config = new ModConfig();
-        public static Dictionary<int, Transform> StickMeshes = new Dictionary<int, Transform>();
+        public static Dictionary<int, Stick> StickMeshes = new Dictionary<int, Stick>();
         public static UtilObj utilObj = new UtilObj();
 
         /// <summary>
