@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("CompetitivePuckTweaks")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+a202927ed5dbd673355b9f1579346bea366f3885")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+bd4e687ac30df871b4192f52d7af72f4aad3b99b")]
 [assembly: System.Reflection.AssemblyProductAttribute("CompetitivePuckTweaks")]
 [assembly: System.Reflection.AssemblyTitleAttribute("CompetitivePuckTweaks")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

@@ -7,6 +7,7 @@ using System.Reflection;
 using System.CodeDom;
 using MonoMod.Utils;
 using System.IO;
+using Unity.Netcode;
 
 namespace CompetitivePuckTweaks.src
 {
@@ -101,6 +102,14 @@ namespace CompetitivePuckTweaks.src
                         UIChat.Instance.Server_SendSystemChatMessage($"Failed to load config: {e.Message}", clientId);
                     }
                     break;
+                case "/forcesync":
+                case "/fs":
+                    foreach (Player player in PlayerManager.Instance.GetPlayers())
+                    {
+                        ulong id = player.OwnerClientId;
+                        PluginCore.ManualSync(id);
+                    }
+                    break;
 
             }
         }
@@ -129,6 +138,12 @@ namespace CompetitivePuckTweaks.src
                 int.TryParse(args[1], out int newValue);
                 targetInfo.SetValue(PluginCore.config, newValue);
             }
+            if (targetInfo.Name == "PuckScale")
+            {
+                foreach (Puck puck in PuckManager.Instance.GetPucks()) puck.transform.localScale = Vector3.one * PluginCore.config.PuckScale;
+                foreach (Player player in PlayerManager.Instance.GetPlayers()) PluginCore.ManualSync(player.OwnerClientId);
+            }
+            if (targetInfo.Name == "ButterflyPadOffset") foreach (Player player in PlayerManager.Instance.GetPlayers()) PluginCore.ManualSync(player.OwnerClientId);
         }
     }
 }

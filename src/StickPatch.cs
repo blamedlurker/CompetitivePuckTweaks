@@ -101,14 +101,14 @@ namespace CompetitivePuckTweaks.src
     }
 
     [HarmonyPatch(typeof(Stick), nameof(Stick.OnNetworkDespawn))]
-    public class DespawnPatch
+    public class StickDespawnPatch
     {
         [HarmonyPrefix]
         public static bool Prefix(Stick __instance)
         {
             BoxCollider thisBoxCol;
             if (PluginCore.config.BananaMode) return false;
-            if (!PluginCore.config.ConstrainStickOnStick) return true;
+            if (!PluginCore.config.UsePhysicsModificationEvents) return true;
             StickMesh thisStickMesh = __instance.gameObject.GetComponentInChildren<StickMesh>();
             if (PluginCore.config.EnableMidStickCollider) { thisBoxCol = __instance.GetComponent<BoxCollider>(); }
             else { thisBoxCol = null; }

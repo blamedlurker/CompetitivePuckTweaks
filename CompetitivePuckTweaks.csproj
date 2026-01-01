@@ -21,7 +21,7 @@
     </ReadLinesFromFile>
 
     <PropertyGroup>
-      <BaseVersion>0.5g</BaseVersion>
+      <BaseVersion>0.6a</BaseVersion>
       <CurrentBuildNumber Condition="'@(BuildCounterLines)' == ''">0</CurrentBuildNumber>
       <CurrentBuildNumber Condition="'@(BuildCounterLines)' != ''">@(BuildCounterLines)</CurrentBuildNumber>
       <NewBuildNumber>$([MSBuild]::Add($(CurrentBuildNumber), 1))</NewBuildNumber>

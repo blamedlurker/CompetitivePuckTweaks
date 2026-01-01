@@ -5,8 +5,9 @@ using System;
 using System.IO;
 using System.Reflection;
 using System.Text.Json;
-using SingularityGroup.HotReload;
 using System.Collections.Generic;
+using Unity.Netcode;
+
 
 namespace CompetitivePuckTweaks.src
 {
@@ -18,7 +19,9 @@ namespace CompetitivePuckTweaks.src
         public static Mesh groinMesh;
         public static ModConfig config = new ModConfig();
         public static Dictionary<int, Stick> StickMeshes = new Dictionary<int, Stick>();
+        public static List<int> PuckIDs = new List<int>();
         public static UtilObj utilObj = new UtilObj();
+        private bool EventListenersPresent = false;
 
         /// <summary>
         /// Core plugin enable function
@@ -66,11 +69,12 @@ namespace CompetitivePuckTweaks.src
 
 
                 PluginCore.Log($"Current configuration: {JsonSerializer.Serialize(config)}");
-                if (config.ConstrainStickOnStick) utilObj = new UtilObj();
+                
+                if (config.UsePhysicsModificationEvents) utilObj = new UtilObj();
 
                 _harmony.PatchAll();
 
-                if (config.ConstrainStickOnStick) utilObj.LoadListeners();
+                if (config.UsePhysicsModificationEvents) utilObj.LoadListeners();
 
                 foreach (MethodBase method in _harmony.GetPatchedMethods()) PluginCore.Log($"Patched method: {method.ReflectedType}.{method.Name}");
 
@@ -84,6 +88,8 @@ namespace CompetitivePuckTweaks.src
                 Time.fixedDeltaTime = config.FixedDeltaTime;
                 Physics.defaultSolverIterations = config.SolverIterations;
 
+                EventManager.Instance.AddEventListener("Event_OnClientConnected", SendSyncMessage);
+                Log("Sync message listener added.");
 
                 return true;
             }
@@ -109,7 +115,8 @@ namespace CompetitivePuckTweaks.src
             try
             {
                 _harmony.UnpatchSelf();
-                // if (config.ConstrainStickOnStickDim) Utils.UnloadListeners();
+                if (config.UsePhysicsModificationEvents) utilObj.UnloadListeners();
+                if (EventListenersPresent) EventManager.Instance.RemoveEventListener("Event_OnClientConnected", SendSyncMessage);
                 return true;
             }
             catch (Exception e)
@@ -119,6 +126,9 @@ namespace CompetitivePuckTweaks.src
             }
         }
 
+        /// <summary>
+        /// Loads custom meshes (CURRENTLY DEPRECATED)
+        /// </summary>
         public static void DefinePlayerMeshes()
         {
 
@@ -148,9 +158,50 @@ namespace CompetitivePuckTweaks.src
             PluginCore.Log($"PlayerGroin mesh defined with {groinMesh.vertexCount} vertices and {groinMesh.triangles.Length / 3} triangles.");
         }
 
+        /// <summary>
+        /// Logs a message formatted with mod name
+        /// </summary>
+        /// <param name="message">Message to be logged</param>
         public static void Log(string message)
         {
             Debug.Log($"[{Constants.MOD_NAME}] " + message);
+        }
+
+        /// <summary>
+        /// Sends named custom message for syncing client config with server
+        /// </summary>
+        /// <param name="message">Input dictionary with connection information</param>
+        public void SendSyncMessage(Dictionary<string, object> message)
+        {
+            ulong targetId = (ulong)message["clientId"];
+            Log($"Sending config sync message to client {targetId}...");
+            
+            ConfigSyncPackage messageContent = new ConfigSyncPackage(config);
+            var writer = new FastBufferWriter(1024, Unity.Collections.Allocator.Temp);
+            var customMessagingManager = NetworkManager.Singleton.CustomMessagingManager;
+
+            using (writer)
+            {
+                writer.WriteValueSafe(messageContent);
+                customMessagingManager.SendNamedMessage("CPT_sync_config", targetId, writer);
+                Log($"Config sync sent to client {targetId}");
+            }
+        }
+
+        public static void ManualSync(ulong targetId)
+        {
+            Log($"Sending config sync message to client {targetId}...");
+            
+            ConfigSyncPackage messageContent = new ConfigSyncPackage(config);
+            var writer = new FastBufferWriter(1024, Unity.Collections.Allocator.Temp);
+            var customMessagingManager = NetworkManager.Singleton.CustomMessagingManager;
+
+            using (writer)
+            {
+                writer.WriteValueSafe(messageContent);
+                customMessagingManager.SendNamedMessage("CPT_sync_config", targetId, writer);
+                Log($"Config sync sent to client {targetId}");
+            }
         }
     }
 }

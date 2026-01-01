@@ -1,3 +1,7 @@
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection.Emit;
 using HarmonyLib;
 using Unity.Netcode;
 using UnityEngine;
@@ -9,9 +13,12 @@ namespace CompetitivePuckTweaks.src
     {
         [HarmonyPostfix]
         public static void Postfix(PlayerBodyV2 __instance, ref float ___slideTurnMultiplier,
-         ref float ___stopDrag, ref float ___balanceRecoveryTime, ref PlayerMesh ___playerMesh, ref float ___slideDrag)
+         ref float ___stopDrag, ref float ___balanceRecoveryTime, ref PlayerMesh ___playerMesh, ref float ___slideDrag, ref float ___tackleForceMultiplier,
+         ref float ___tackleForceThreshold, ref float ___tackleSpeedThreshold)
         {
-            if (GameManager.Instance.Phase == GamePhase.FaceOff && PluginCore.config.RandomPuckDrop)
+            if (__instance.Player.IsReplay.Value) return;
+
+            if (GameManager.Instance.Phase == GamePhase.FaceOff)
             {
                 if (__instance.Player.PlayerPosition.Name == "C")
                 {
@@ -23,6 +30,9 @@ namespace CompetitivePuckTweaks.src
             ___slideTurnMultiplier = PluginCore.config.SlideTurnMultiplier;
             ___stopDrag = PluginCore.config.StopDrag;
             ___balanceRecoveryTime = PluginCore.config.BalanceRecoveryTime;
+            ___tackleForceMultiplier = PluginCore.config.TackleForceMultiplier;
+            ___tackleForceThreshold = PluginCore.config.TackleForceThreshold;
+            ___tackleSpeedThreshold = PluginCore.config.TackleSpeedThreshold;
             __instance.GetComponent<CapsuleCollider>().radius *= PluginCore.config.TorsoColliderRadiusFactor;
             // cc.enabled = false;
             // BoxCollider newTorso = __instance.gameObject.AddComponent<BoxCollider>();
@@ -55,23 +65,33 @@ namespace CompetitivePuckTweaks.src
                 }
             }
 
-            if (PluginCore.config.EnablePuckThroughBodies && !isGoalie && !__instance.Player.IsReplay.Value)
+            ___playerMesh.PlayerTorso.GetComponentInChildren<MeshCollider>().material.bounciness = PluginCore.config.PlayerColliderBounciness;
+            ___playerMesh.PlayerGroin.GetComponentInChildren<MeshCollider>().material.bounciness = PluginCore.config.PlayerColliderBounciness;
+            ___playerMesh.PlayerHead.GetComponentInChildren<SphereCollider>().material.bounciness = PluginCore.config.PlayerColliderBounciness;
+
+            if (isGoalie) return;
+            
+            if (PluginCore.config.EnablePuckThroughBodies && !__instance.Player.IsReplay.Value)
             {
                 ___playerMesh.PlayerGroin.GetComponentInChildren<MeshCollider>().excludeLayers |= (1 << LayerMask.NameToLayer("Puck"));
                 ___playerMesh.PlayerTorso.GetComponentInChildren<MeshCollider>().excludeLayers |= (1 << LayerMask.NameToLayer("Puck"));
                 ___playerMesh.PlayerHead.GetComponentInChildren<SphereCollider>().excludeLayers |= (1 << LayerMask.NameToLayer("Puck"));
             }
 
-            if (PluginCore.config.EnablePuckThroughGroin && !isGoalie && !__instance.Player.IsReplay.Value)
+            if (PluginCore.config.EnablePuckThroughGroin && !__instance.Player.IsReplay.Value)
             {
                 ___playerMesh.PlayerGroin.GetComponentInChildren<MeshCollider>().excludeLayers |= (1 << LayerMask.NameToLayer("Puck"));
             }
 
-            if (!isGoalie) ___slideDrag = PluginCore.config.SlideDrag;
+            ___slideDrag = PluginCore.config.SlideDrag;
 
-            ___playerMesh.PlayerTorso.GetComponentInChildren<MeshCollider>().material.bounciness = PluginCore.config.PlayerColliderBounciness;
-            ___playerMesh.PlayerGroin.GetComponentInChildren<MeshCollider>().material.bounciness = PluginCore.config.PlayerColliderBounciness;
-            ___playerMesh.PlayerHead.GetComponentInChildren<SphereCollider>().material.bounciness = PluginCore.config.PlayerColliderBounciness;
+            if (PluginCore.config.ThinSkaterBodies)
+            {
+                ___playerMesh.PlayerGroin.GetComponentInChildren<MeshCollider>().transform.localScale = new Vector3(PluginCore.config.SkaterThinningFactor, 1, PluginCore.config.SkaterThinningFactor);
+                ___playerMesh.PlayerTorso.GetComponentInChildren<MeshCollider>().transform.localScale = new Vector3(PluginCore.config.SkaterThinningFactor, 1, PluginCore.config.SkaterThinningFactor);
+            }
+
+            
         }
     }
 
@@ -92,8 +112,11 @@ namespace CompetitivePuckTweaks.src
         public static bool Prefix(PlayerBodyV2 __instance, ref bool ___canDash, ref NetworkVariable<bool> ___IsSliding, ref float ___dashVelocity,
         ref NetworkVariable<bool> ___IsStopping, ref float ___dashStaminaDrain)
         {
-            if (!PluginCore.config.EnableGoalieMicrodash) return true;
+            if (__instance.Player.IsReplay.Value) return true;       
             if (!___canDash) return false;
+            if (Mathf.Abs(__instance.transform.worldToLocalMatrix.MultiplyVector(__instance.Rigidbody.linearVelocity).x) > PluginCore.config.GoalieDashSpeedLimit) ___dashVelocity *= 0.5f;
+            else ___dashVelocity = 6f;
+            if (!PluginCore.config.EnableGoalieMicrodash) return true;
             if (___IsSliding.Value) return true;
             if (___IsStopping.Value) return true;
             if (__instance.IsJumping) return true;
@@ -102,7 +125,7 @@ namespace CompetitivePuckTweaks.src
 
                 __instance.Rigidbody.AddForce(-__instance.transform.right * ___dashVelocity * 0.55f, ForceMode.VelocityChange);
                 __instance.Stamina -= PluginCore.config.MicrodashStamCostFraction * ___dashStaminaDrain;
-                return false; // Skip original method execution
+                return false;
             }
             return true;
         }
@@ -114,14 +137,16 @@ namespace CompetitivePuckTweaks.src
         [HarmonyPrefix]
         public static bool Prefix(PlayerBodyV2 __instance, ref bool ___canDash, ref NetworkVariable<bool> ___IsSliding, ref float ___dashVelocity, ref NetworkVariable<bool> ___IsStopping, ref float ___dashStaminaDrain)
         {
-            if (!PluginCore.config.EnableGoalieMicrodash) return true;
+            if (__instance.Player.IsReplay.Value) return true;
             if (!___canDash) return false;
+            if (Mathf.Abs(__instance.transform.worldToLocalMatrix.MultiplyVector(__instance.Rigidbody.linearVelocity).x) > PluginCore.config.GoalieDashSpeedLimit) ___dashVelocity *= 0.5f;
+            else ___dashVelocity = 6f;
+            if (!PluginCore.config.EnableGoalieMicrodash) return true;            
             if (___IsSliding.Value) return true;
             if (___IsStopping.Value) return true;
             if (__instance.IsJumping) return true;
             if (!(__instance.Rigidbody.linearVelocity.magnitude > 3.2f) && __instance.Stamina > 0.5f * ___dashStaminaDrain)
             {
-
                 __instance.Rigidbody.AddForce(__instance.transform.right * ___dashVelocity * 0.55f, ForceMode.VelocityChange);
                 __instance.Stamina -= PluginCore.config.MicrodashStamCostFraction * ___dashStaminaDrain;
                 return false;
@@ -130,6 +155,54 @@ namespace CompetitivePuckTweaks.src
 
         }
     }
+
+    // [HarmonyPatch(typeof(PlayerBodyV2), "OnCollisionEnter")]
+    // public class CollisionPatch
+    // {
+    //     [HarmonyTranspiler]
+    //     public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+    //     {
+    //         bool foundGroundedCheck = false;
+    //         int startIndex = -1;
+    //         int endIndex = -1;
+
+    //         var codes = new List<CodeInstruction>(instructions);
+    //         // foreach (CodeInstruction codeInstruction in codes) PluginCore.Log(codeInstruction.ToString());
+    //         for (int i = 0; i < codes.Count; i++)
+    //         {
+    //             if (codes[i].opcode == OpCodes.Ret)
+    //             {
+    //                 if (foundGroundedCheck)
+    //                 {
+    //                     endIndex = i;
+    //                     break;
+    //                 }
+    //                 else
+    //                 {
+    //                     startIndex = i + 1;
+    //                     for (int j = startIndex; j < codes.Count; j++)
+    //                     {
+    //                         if (codes[j].opcode == OpCodes.Ret) break;
+    //                         string strOp = codes[j].ToString();
+    //                         if (strOp == "call bool PlayerBodyV2::get_IsGrounded()")
+    //                         {
+    //                             foundGroundedCheck = true;
+    //                             break;
+    //                         }
+    //                     }
+    //                 }
+    //             }
+    //         }
+
+    //         if (startIndex > -1 && endIndex > -1)
+    //         {
+    //             codes[startIndex].opcode = OpCodes.Nop;
+    //             codes.RemoveRange(startIndex + 1, endIndex - startIndex - 1);
+    //         }
+
+    //         return codes.AsEnumerable();
+    //     }
+    // }
 
 
 }
