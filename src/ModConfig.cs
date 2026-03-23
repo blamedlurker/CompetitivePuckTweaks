@@ -121,6 +121,10 @@ namespace CompetitivePuckTweaks.src
         public float FixedDeltaTime { get; set; } = 0.01f;
         public int SolverIterations { get; set; } = 6;
         public bool UsePhysicsModificationEvents { get; set; } = true;
+        public bool EnableJohnBoardBounceTweak {get;set;} = false;
+        public float JohnBoardBounceLinearReduction {get;set;} = 0.15f;
+        public float JohnBoardBounceDefaultForce {get;set;} = 1f; 
+
 
         // fields for mod configuration
         public bool OpenConfigChanges { get; set; } = false;
