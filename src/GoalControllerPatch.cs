@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace CompetitivePuckTweaks.src
 {
-    [HarmonyPatch(typeof(GoalController), "OnNetworkSpawn")]
+    [HarmonyPatch(typeof(GoalController), "Awake")]
     public class GoalControllerPatch
     {
         [HarmonyPostfix]

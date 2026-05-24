@@ -23,10 +23,10 @@
 //         [HarmonyPostfix]
 //         public static void Postfix(Player __instance, UnityEngine.Vector3 position, Quaternion rotation, PlayerRole role)
 //         {
-//             UIChat.Instance.Server_SendSystemChatMessage("PlayerRespawn Postfix called.");
+//             UIChat.Server_SendSystemChatMessage("PlayerRespawn Postfix called.");
 //             if (__instance.PlayerPosition.Name == "C")
 //             {
-//                 UIChat.Instance.Server_SendSystemChatMessage("Player is C");
+//                 UIChat.Server_SendSystemChatMessage("Player is C");
 //                 __instance.transform.position += (__instance.Team.Value == PlayerTeam.Blue ? new UnityEngine.Vector3(0, 0, 1.5f) : new UnityEngine.Vector3(0, 0, -1.5f));
 //             }
 //         }

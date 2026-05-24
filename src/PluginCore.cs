@@ -7,12 +7,13 @@ using System.Reflection;
 using System.Text.Json;
 using System.Collections.Generic;
 using Unity.Netcode;
+using GLTFast;
 
 
 namespace CompetitivePuckTweaks.src
 {
 
-    public class PluginCore : IPuckMod
+    public class PluginCore : IPuckPlugin
     {
         public Harmony _harmony = new Harmony("_harmony");
         public static Mesh torsoMesh;
@@ -33,8 +34,7 @@ namespace CompetitivePuckTweaks.src
 
             if (!(SystemInfo.graphicsDeviceType == GraphicsDeviceType.Null))
             {
-                PluginCore.Log($"This mod is only intended for servers.");
-                return false;
+                PluginCore.Log($"[WARNING] This mod is only intended for servers. Continue at your own risk.");
             }
             PluginCore.Log($"Enabling...");
 
@@ -69,7 +69,18 @@ namespace CompetitivePuckTweaks.src
 
 
                 PluginCore.Log($"Current configuration: {JsonSerializer.Serialize(config)}");
-                
+
+                if (NetworkManager.Singleton != null)
+                    InjectComponents();
+                else
+                {
+                    PluginCore.Log($"Waiting for network manager...");
+                    var coroutineHost = new GameObject("CPTCoroutineHost");
+                    UnityEngine.Object.DontDestroyOnLoad(coroutineHost);
+                    var runner = coroutineHost.AddComponent<MonoBehaviour>();
+                    runner.StartCoroutine(WaitForNetworkManager());
+                }
+
                 if (config.UsePhysicsModificationEvents) utilObj = new UtilObj();
 
                 _harmony.PatchAll();
@@ -88,7 +99,9 @@ namespace CompetitivePuckTweaks.src
                 Time.fixedDeltaTime = config.FixedDeltaTime;
                 Physics.defaultSolverIterations = config.SolverIterations;
 
-                EventManager.Instance.AddEventListener("Event_OnClientConnected", SendSyncMessage);
+                EventManager.AddEventListener("Event_Server_OnApprovedClientConnected", SendSyncMessage);
+                EventManager.AddEventListener("Event_Everyone_OnGameStateChanged", CheckGamePhase);
+                EventManager.AddEventListener("Event_Server_OnChatCommand", ChatManagerControllerPatch.ChatCommandListener);
                 Log("Sync message listener added.");
 
                 return true;
@@ -108,21 +121,96 @@ namespace CompetitivePuckTweaks.src
         {
             if (!(SystemInfo.graphicsDeviceType == GraphicsDeviceType.Null))
             {
-                PluginCore.Log($"This mod is only intended for servers.");
-                return false;
+                PluginCore.Log($"[WARNING] This mod is only intended for servers. Continue at your own risk.");
             }
             PluginCore.Log($"Disabling...");
             try
             {
+                if (NetworkManager.Singleton != null)
+                    RemoveInjectedComponents();
+                else
+                {
+                    PluginCore.Log($"Waiting for network manager...");
+                    var coroutineHost = new GameObject("CPTCoroutineHost");
+                    UnityEngine.Object.DontDestroyOnLoad(coroutineHost);
+                    var runner = coroutineHost.AddComponent<MonoBehaviour>();
+                    runner.StartCoroutine(WaitForNetworkManagerForRemoval());
+                }
+
                 _harmony.UnpatchSelf();
                 if (config.UsePhysicsModificationEvents) utilObj.UnloadListeners();
-                if (EventListenersPresent) EventManager.Instance.RemoveEventListener("Event_OnClientConnected", SendSyncMessage);
+                if (EventListenersPresent) EventManager.RemoveEventListener("Event_Server_OnApprovedClientConnected", SendSyncMessage);
+                Log($"Mod disabled.");
                 return true;
             }
             catch (Exception e)
             {
                 PluginCore.Log($"Failed to disable: {e}");
                 return false;
+            }
+        }
+
+        private System.Collections.IEnumerator WaitForNetworkManager()
+        {
+            while (NetworkManager.Singleton == null)
+                yield return null;
+            InjectComponents();
+        }
+
+        private System.Collections.IEnumerator WaitForNetworkManagerForRemoval()
+        {
+            while (NetworkManager.Singleton == null)
+                yield return null;
+            RemoveInjectedComponents();
+        }
+
+        private void InjectComponents()
+        {
+            NetworkManager nm = NetworkManager.Singleton;
+            Log($"Checking prefabs for injection...");
+            foreach (var entry in nm.NetworkConfig.Prefabs.Prefabs)
+            {
+                var prefab = entry.Prefab;
+                if (prefab == null) continue;
+
+                PlayerBody body = prefab.GetComponent<PlayerBody>();
+
+                if (body != null && prefab.name.Contains("Goalie"))
+                {
+                    if (prefab.GetComponent<LegPadHelper>() == null)
+                    {
+                        var helper = prefab.AddComponent<LegPadHelper>();
+                        helper.legPadLeft = body.PlayerMesh.PlayerLegPadLeft;
+                        helper.legPadRight = body.PlayerMesh.PlayerLegPadRight;
+                        helper.playerRigidbody = body.Rigidbody;
+                        var field = typeof(NetworkObject).GetField("m_ChildNetworkBehaviours", BindingFlags.NonPublic | BindingFlags.Instance);
+                        field.SetValue(prefab.GetComponent<NetworkObject>(), null);
+                        PluginCore.Log($"Injected LegPadHelper into {prefab.name}");
+                    }
+                }
+            }
+
+
+        }
+
+        private void RemoveInjectedComponents()
+        {
+            NetworkManager nm = NetworkManager.Singleton;
+            foreach (var entry in nm.NetworkConfig.Prefabs.Prefabs)
+            {
+                var prefab = entry.Prefab;
+                if (prefab == null) continue;
+
+                PlayerBody body = prefab.GetComponent<PlayerBody>();
+
+                if (body != null)
+                {
+                    if (prefab.GetComponent<LegPadHelper>() != null)
+                    {
+                        UnityEngine.Object.Destroy(prefab.GetComponent<LegPadHelper>());
+                        PluginCore.Log($"LegPadHelper removed from {prefab.name}");
+                    }
+                }
             }
         }
 
@@ -175,7 +263,7 @@ namespace CompetitivePuckTweaks.src
         {
             ulong targetId = (ulong)message["clientId"];
             Log($"Sending config sync message to client {targetId}...");
-            
+
             ConfigSyncPackage messageContent = new ConfigSyncPackage(config);
             var writer = new FastBufferWriter(1024, Unity.Collections.Allocator.Temp);
             var customMessagingManager = NetworkManager.Singleton.CustomMessagingManager;
@@ -188,10 +276,29 @@ namespace CompetitivePuckTweaks.src
             }
         }
 
+        public void CheckGamePhase(Dictionary<string, object> message)
+        {
+            if (!PluginCore.config.EnableJohnsFaceoff || message == null) return;
+
+            GameState oldState = (GameState)message["oldGameState"];
+            GameState newState = (GameState)message["newGameState"];
+
+            GamePhase oldPhase = oldState.Phase;
+            GamePhase newPhase = newState.Phase;
+
+            if (newPhase == GamePhase.FaceOff)
+            {
+                PuckManagerPatch.ModifyNextSpawn = true;
+                return;
+            }
+            else if (oldPhase == GamePhase.FaceOff && newPhase == GamePhase.Play) return;
+            else PuckManagerPatch.ModifyNextSpawn = false;
+        }
+
         public static void ManualSync(ulong targetId)
         {
             Log($"Sending config sync message to client {targetId}...");
-            
+
             ConfigSyncPackage messageContent = new ConfigSyncPackage(config);
             var writer = new FastBufferWriter(1024, Unity.Collections.Allocator.Temp);
             var customMessagingManager = NetworkManager.Singleton.CustomMessagingManager;

@@ -30,7 +30,8 @@ namespace CompetitivePuckTweaks.src
             foreach (MeshCollider mC in newMeshColliders)
             {
                 mC.hasModifiableContacts = true;
-                PluginCore.StickMeshes.Add(mC.GetInstanceID(), __instance);
+                try {PluginCore.StickMeshes.Add(mC.GetInstanceID(), __instance);}
+                catch (Exception e) { PluginCore.Log($"Failed to add meshcollider key to dictionary: {e.Message}");}
             }
 
             __instance.Rigidbody.mass = PluginCore.config.StickMass;

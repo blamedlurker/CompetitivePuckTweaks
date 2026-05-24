@@ -67,7 +67,12 @@ namespace CompetitivePuckTweaks.src
         public float TackleForceMultiplier { get; set; } = 0.3f;
         public bool ThinSkaterBodies { get; set; } = true;
         public float SkaterThinningFactor { get; set; } = 0.5f;
-        public float ButterflyPadOffset { get; set; } = 0f;
+        public bool ExtraLegPadTweening { get; set; } = false;
+        public float LegPadSpreadMinVelocity { get; set; } = 0.5f;
+        public float LegPadReturnTime { get; set; } = 1.75f;
+        public float LegPadSpreadVelocityFactor { get; set; } = 0.2f;
+        public float LegPadExtensionLimit { get; set; } = 1.4f;
+        public float ButterflyStamRegenRate { get; set; } = 10f;
 
         // fields for puck configuration
         public float PuckMaxSpeed { get; set; } = 50f;
@@ -77,7 +82,7 @@ namespace CompetitivePuckTweaks.src
         public float PuckScale { get; set; } = 0.92f;
         public float PuckDrag { get; set; } = 0.3f;
         public float PuckMass { get; set; } = 0.375f;
-        public bool RandomPuckDrop { get; set; } = true;
+        public bool EnableJohnsFaceoff { get; set; } = false;
         public bool EnablePuckThroughBodies { get; set; } = true;
         public bool EnablePuckThroughGroin { get; set; } = true;
         public bool PuckDragSpeedDependence { get; set; } = true;
@@ -120,10 +125,13 @@ namespace CompetitivePuckTweaks.src
         // fields for physics configuration
         public float FixedDeltaTime { get; set; } = 0.01f;
         public int SolverIterations { get; set; } = 6;
+        public bool EnableAerialOverspeedFix { get; set; } = true;
         public bool UsePhysicsModificationEvents { get; set; } = true;
-        public bool EnableJohnBoardBounceTweak {get;set;} = false;
-        public float JohnBoardBounceLinearReduction {get;set;} = 0.15f;
-        public float JohnBoardBounceDefaultForce {get;set;} = 1f; 
+        public bool EnableJohnBoardBounceTweak { get; set; } = false;
+        public float JohnBoardBounceLinearReduction { get; set; } = 0.15f;
+        public float JohnBoardBounceDefaultForce { get; set; } = 1f;
+        public bool ModifyPuckOnHandle { get; set; } = false;
+        public float PuckOnHandleCollisionLimit { get; set; } = -0.75f;
 
 
         // fields for mod configuration

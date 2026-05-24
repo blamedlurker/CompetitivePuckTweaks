@@ -60,7 +60,7 @@ namespace CompetitivePuckTweaks.src
         [HarmonyPostfix]
         public static void Postfix(StickPositioner __instance, ref float ___outputMin, ref float ___outputMax)
         {
-            float defaultValue = __instance.Player.Role.Value == PlayerRole.Goalie ? PluginCore.config.GoaliePositionerOutputMax : PluginCore.config.StickPositionerOutputMax;
+            float defaultValue = __instance.Player.Role == PlayerRole.Goalie ? PluginCore.config.GoaliePositionerOutputMax : PluginCore.config.StickPositionerOutputMax;
 
             if (!PluginCore.config.AlterStickPositionerOutput) return;
             else if (!PluginCore.config.EnableStickSpeedDecay)

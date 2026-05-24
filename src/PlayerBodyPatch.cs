@@ -1,18 +1,17 @@
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection.Emit;
+using System;
+using System.Reflection;
+using DG.Tweening;
 using HarmonyLib;
 using Unity.Netcode;
 using UnityEngine;
 
 namespace CompetitivePuckTweaks.src
 {
-    [HarmonyPatch(typeof(PlayerBodyV2), "OnNetworkPostSpawn")]
+    [HarmonyPatch(typeof(PlayerBody), "OnNetworkPostSpawn")]
     public class PlayerBodyPatch
     {
         [HarmonyPostfix]
-        public static void Postfix(PlayerBodyV2 __instance, ref float ___slideTurnMultiplier,
+        public static void Postfix(PlayerBody __instance, ref float ___slideTurnMultiplier,
          ref float ___stopDrag, ref float ___balanceRecoveryTime, ref PlayerMesh ___playerMesh, ref float ___slideDrag, ref float ___tackleForceMultiplier,
          ref float ___tackleForceThreshold, ref float ___tackleSpeedThreshold)
         {
@@ -22,7 +21,7 @@ namespace CompetitivePuckTweaks.src
             {
                 if (__instance.Player.PlayerPosition.Name == "C")
                 {
-                    if (__instance.Player.Team.Value == PlayerTeam.Blue) __instance.transform.position += new UnityEngine.Vector3(0, 0, PluginCore.config.CenterSpawnOffset);
+                    if (__instance.Player.Team == PlayerTeam.Blue) __instance.transform.position += new UnityEngine.Vector3(0, 0, PluginCore.config.CenterSpawnOffset);
                     else __instance.transform.position -= new UnityEngine.Vector3(0, 0, PluginCore.config.CenterSpawnOffset);
                 }
             }
@@ -70,7 +69,7 @@ namespace CompetitivePuckTweaks.src
             ___playerMesh.PlayerHead.GetComponentInChildren<SphereCollider>().material.bounciness = PluginCore.config.PlayerColliderBounciness;
 
             if (isGoalie) return;
-            
+
             if (PluginCore.config.EnablePuckThroughBodies && !__instance.Player.IsReplay.Value)
             {
                 ___playerMesh.PlayerGroin.GetComponentInChildren<MeshCollider>().excludeLayers |= (1 << LayerMask.NameToLayer("Puck"));
@@ -91,28 +90,41 @@ namespace CompetitivePuckTweaks.src
                 ___playerMesh.PlayerTorso.GetComponentInChildren<MeshCollider>().transform.localScale = new Vector3(PluginCore.config.SkaterThinningFactor, 1, PluginCore.config.SkaterThinningFactor);
             }
 
-            
+
         }
     }
 
-    [HarmonyPatch(typeof(PlayerBodyV2), "FixedUpdate")]
+    [HarmonyPatch(typeof(PlayerBody), "FixedUpdate")]
     public class PlayerBodyFixedUpdatePatch
     {
+
+        [HarmonyPrefix]
+        public static void Prefix(PlayerBody __instance, ref float ___staminaRegenerationRate)
+        {
+            if (__instance.Player.Role == PlayerRole.Goalie)
+            {
+                if (__instance.IsSliding.Value)
+                    ___staminaRegenerationRate = PluginCore.config.ButterflyStamRegenRate;
+                else
+                    ___staminaRegenerationRate = 10f;
+            }
+        }
+
         [HarmonyPostfix]
-        public static void Postfix(PlayerBodyV2 __instance)
+        public static void Postfix(PlayerBody __instance)
         {
             if (!__instance.IsUpright && !__instance.IsSideways) __instance.OnFall();
         }
     }
 
-    [HarmonyPatch(typeof(PlayerBodyV2), "DashLeft")]
+    [HarmonyPatch(typeof(PlayerBody), "DashLeft")]
     public class PlayerBodyDashLeftPatch
     {
         [HarmonyPrefix]
-        public static bool Prefix(PlayerBodyV2 __instance, ref bool ___canDash, ref NetworkVariable<bool> ___IsSliding, ref float ___dashVelocity,
+        public static bool Prefix(PlayerBody __instance, ref bool ___canDash, ref NetworkVariable<bool> ___IsSliding, ref float ___dashVelocity,
         ref NetworkVariable<bool> ___IsStopping, ref float ___dashStaminaDrain)
         {
-            if (__instance.Player.IsReplay.Value) return true;       
+            if (__instance.Player.IsReplay.Value) return true;
             if (!___canDash) return false;
             if (Mathf.Abs(__instance.transform.worldToLocalMatrix.MultiplyVector(__instance.Rigidbody.linearVelocity).x) > PluginCore.config.GoalieDashSpeedLimit) ___dashVelocity *= 0.5f;
             else ___dashVelocity = 6f;
@@ -120,43 +132,63 @@ namespace CompetitivePuckTweaks.src
             if (___IsSliding.Value) return true;
             if (___IsStopping.Value) return true;
             if (__instance.IsJumping) return true;
-            if (!(__instance.Rigidbody.linearVelocity.magnitude > 3.2f) && __instance.Stamina > 0.5f * ___dashStaminaDrain)
+            if (!(__instance.Rigidbody.linearVelocity.magnitude > 3.2f) && __instance.Stamina.Value > 0.5f * ___dashStaminaDrain)
             {
 
                 __instance.Rigidbody.AddForce(-__instance.transform.right * ___dashVelocity * 0.55f, ForceMode.VelocityChange);
-                __instance.Stamina -= PluginCore.config.MicrodashStamCostFraction * ___dashStaminaDrain;
+                __instance.Stamina.Value -= PluginCore.config.MicrodashStamCostFraction * ___dashStaminaDrain;
                 return false;
             }
             return true;
         }
+
+        [HarmonyPostfix]
+        public static void Postfix(PlayerBody __instance, ref bool ___HasDashExtended, ref NetworkVariable<bool> ___IsExtendedRight, ref Tween ___dashLegPadTween)
+        {
+            if (!PluginCore.config.ExtraLegPadTweening || __instance.Player.Role != PlayerRole.Goalie) return;
+            if (___dashLegPadTween != null) ___dashLegPadTween.Kill(false);
+            ___IsExtendedRight.Value = false;
+            LegPadHelper helper = __instance.GetComponent<LegPadHelper>();
+            __instance.StartCoroutine(helper.PostDashLeftStateChange());
+        }
     }
 
-    [HarmonyPatch(typeof(PlayerBodyV2), "DashRight")]
+    [HarmonyPatch(typeof(PlayerBody), "DashRight")]
     public class PlayerBodyDashRightPatch
     {
         [HarmonyPrefix]
-        public static bool Prefix(PlayerBodyV2 __instance, ref bool ___canDash, ref NetworkVariable<bool> ___IsSliding, ref float ___dashVelocity, ref NetworkVariable<bool> ___IsStopping, ref float ___dashStaminaDrain)
+        public static bool Prefix(PlayerBody __instance, ref bool ___canDash, ref NetworkVariable<bool> ___IsSliding, ref float ___dashVelocity, ref NetworkVariable<bool> ___IsStopping, ref float ___dashStaminaDrain)
         {
             if (__instance.Player.IsReplay.Value) return true;
             if (!___canDash) return false;
             if (Mathf.Abs(__instance.transform.worldToLocalMatrix.MultiplyVector(__instance.Rigidbody.linearVelocity).x) > PluginCore.config.GoalieDashSpeedLimit) ___dashVelocity *= 0.5f;
             else ___dashVelocity = 6f;
-            if (!PluginCore.config.EnableGoalieMicrodash) return true;            
+            if (!PluginCore.config.EnableGoalieMicrodash) return true;
             if (___IsSliding.Value) return true;
             if (___IsStopping.Value) return true;
             if (__instance.IsJumping) return true;
-            if (!(__instance.Rigidbody.linearVelocity.magnitude > 3.2f) && __instance.Stamina > 0.5f * ___dashStaminaDrain)
+            if (!(__instance.Rigidbody.linearVelocity.magnitude > 3.2f) && __instance.Stamina.Value > 0.5f * ___dashStaminaDrain)
             {
                 __instance.Rigidbody.AddForce(__instance.transform.right * ___dashVelocity * 0.55f, ForceMode.VelocityChange);
-                __instance.Stamina -= PluginCore.config.MicrodashStamCostFraction * ___dashStaminaDrain;
+                __instance.Stamina.Value -= PluginCore.config.MicrodashStamCostFraction * ___dashStaminaDrain;
                 return false;
             }
             return true;
 
         }
+
+        [HarmonyPostfix]
+        public static void Postfix(PlayerBody __instance, ref bool ___HasDashExtended, ref NetworkVariable<bool> ___IsExtendedLeft, ref Tween ___dashLegPadTween)
+        {
+            if (!PluginCore.config.ExtraLegPadTweening || __instance.Player.Role != PlayerRole.Goalie) return;
+            if (___dashLegPadTween != null) ___dashLegPadTween.Kill(false);
+            ___IsExtendedLeft.Value = false;
+            LegPadHelper helper = __instance.GetComponent<LegPadHelper>();
+            __instance.StartCoroutine(helper.PostDashRightStateChange());
+        }
     }
 
-    // [HarmonyPatch(typeof(PlayerBodyV2), "OnCollisionEnter")]
+    // [HarmonyPatch(typeof(PlayerBody), "OnCollisionEnter")]
     // public class CollisionPatch
     // {
     //     [HarmonyTranspiler]
@@ -184,7 +216,7 @@ namespace CompetitivePuckTweaks.src
     //                     {
     //                         if (codes[j].opcode == OpCodes.Ret) break;
     //                         string strOp = codes[j].ToString();
-    //                         if (strOp == "call bool PlayerBodyV2::get_IsGrounded()")
+    //                         if (strOp == "call bool PlayerBody::get_IsGrounded()")
     //                         {
     //                             foundGroundedCheck = true;
     //                             break;

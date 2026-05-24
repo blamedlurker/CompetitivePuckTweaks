@@ -15,12 +15,14 @@ namespace CompetitivePuckTweaks.src
         {
             PluginCore.Log("Loading ModificationEvent...");
             Physics.ContactModifyEvent += this.ModificationEvent;
+            Physics.ContactModifyEventCCD += this.ModificationEvent;
             PluginCore.Log("ModificationEvent loaded");
         }
 
         public void UnloadListeners()
         {
             Physics.ContactModifyEvent -= this.ModificationEvent;
+            Physics.ContactModifyEventCCD -= this.ModificationEvent;
             PluginCore.Log("ModificationEvent unloaded");
         }
 
@@ -28,6 +30,7 @@ namespace CompetitivePuckTweaks.src
         {
             try
             {
+                bool ignoreCollision = false;
                 for (int j = 0; j < pairs.Count(); j++)
                 {
 
@@ -41,20 +44,29 @@ namespace CompetitivePuckTweaks.src
 
                     if ((colIsPuck && otherColIsStick) || (colIsStick && otherColIsPuck))
                     {
+                        // PluginCore.Log($"Stick-puck collision detected with {pairs.Count()} contact pairs and {pair.contactCount} contacts in pair {j}");
                         ModifiableMassProperties newMass = pair.massProperties;
+                        float colZ = 0;
+                        Stick stick = null;
 
                         if (colIsStick)
                         {
                             newMass.inverseMassScale = PluginCore.config.StickOnPuckInverseMass;
                             newMass.inverseInertiaScale = PluginCore.config.StickOnPuckInverseMass;
 
+                            stick = PluginCore.StickMeshes[pair.colliderInstanceID];
                         }
                         if (otherColIsStick)
                         {
                             newMass.otherInverseMassScale = PluginCore.config.StickOnPuckInverseMass;
                             newMass.otherInverseInertiaScale = PluginCore.config.StickOnPuckInverseMass;
+
+                            stick = PluginCore.StickMeshes[pair.otherColliderInstanceID];
                         }
                         pair.massProperties = newMass;
+                        if (!PluginCore.config.ModifyPuckOnHandle) continue;
+                        for (int i = 0; i < pair.contactCount; i++) if (stick.transform.InverseTransformPoint(pair.GetPoint(i)).z < colZ) colZ = stick.transform.InverseTransformPoint(pair.GetPoint(i)).z;
+                        if (colZ < PluginCore.config.PuckOnHandleCollisionLimit && stick.Player.Role != PlayerRole.Goalie) ignoreCollision = true;
                     }
                     else if (colIsStick && otherColIsStick)
                         for (int i = 0; i < pair.contactCount; i++)
@@ -83,6 +95,13 @@ namespace CompetitivePuckTweaks.src
                             pair.massProperties = newMass;
 
                         }
+                }
+                if (ignoreCollision)
+                {
+                    foreach (ModifiableContactPair pair in pairs)
+                    {
+                        for (int i = 0; i < pair.contactCount; i++) pair.IgnoreContact(i);
+                    }
                 }
             }
             catch (Exception e) { PluginCore.Log($"Exception in modification event: {e.Message}"); }

@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace CompetitivePuckTweaks.src
 {
-    [HarmonyPatch(typeof(PlayerBodyV2), "OnNetworkPostSpawn")]
+    [HarmonyPatch(typeof(PlayerBody), "OnNetworkPostSpawn")]
     public class BoardColliderPatch
     {
         private static List<Collider> foundBoardColliders = new List<Collider>();
